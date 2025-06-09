@@ -21,8 +21,11 @@ def extract_sources(response):
 
 
 
-def analyze_with_model(topic, rss, model="gpt-4o-mini"):
-    prompt = (
+def analyze_with_model(topic, rss, model="gpt-4o-mini", prompt_template=None):
+    if prompt_template:
+        prompt = prompt_template.format(topic=topic, rss="\n".join(rss))
+    else:
+        prompt = (
         f"Tu es un analyste chargé d'analyser uniquement les actualités pertinentes liées au sujet suivant : \"{topic}\". "
         "Réponds en 1000 caractères max, avec un résumé synthétique. "
         "Ignore les contenus hors-sujet, géopolitiques ou violents. "

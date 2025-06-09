@@ -1,34 +1,72 @@
-from logger import setup_logger
-logger = setup_logger(__name__)
-
 import argparse
-from agent.news_fetcher import get_rss_news
+from logger import setup_logger
 from agent.analyzer import analyze_with_model, extract_sources
+from agent.news_fetcher import get_rss_news
 from output.output_formatter import send_alert
+from prompts.prompts_dict import PROMPT_BY_TOPIC
 from utils import save_training_example
-from datetime import datetime
+from prompt_toolkit import prompt
+from rich.console import Console
+from rich.table import Table
+
+logger = setup_logger(__name__)
+console = Console()
+
+def choisir_categorie():
+    console.print("\n[bold cyan]🧠 Choisis une catégorie d'analyse[/bold cyan]")
+    keys = list(PROMPT_BY_TOPIC.keys())
+
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Numéro", justify="center")
+    table.add_column("Catégorie")
+
+    for i, key in enumerate(keys):
+        table.add_row(str(i), key)
+
+    console.print(table)
+
+    try:
+        index_str = prompt("🎯 Entrez le numéro de la catégorie [0 par défaut] : ").strip()
+        index = int(index_str) if index_str else 0
+
+        if 0 <= index < len(keys):
+            console.print(f"\n✅ Catégorie sélectionnée : [bold green]{keys[index]}[/bold green]")
+            return keys[index]
+        else:
+            raise ValueError
+    except (ValueError, KeyboardInterrupt):
+        console.print("❌ [bold red]Entrée invalide. Fermeture.[/bold red]")
+        exit(1)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--topic", type=str, required=True, help="Sujet à analyser (ex: IA, PSG, politique)")
     parser.add_argument("--model", type=str, default="gpt-4o-mini", help="Modèle IA à utiliser")
     parser.add_argument("--no-send", action="store_true", help="Ne pas envoyer sur Discord/Telegram")
     args = parser.parse_args()
 
-    rss = get_rss_news(topic=args.topic)
-    prompt, response = analyze_with_model(topic=args.topic, rss=rss, model=args.model)
+    topic = choisir_categorie()
+    sous_sujet = prompt("📝 (Optionnel) Sujet plus précis ? ").strip()
+    full_topic = f"{topic} – {sous_sujet}" if sous_sujet else topic
 
-    logger.info(f"Analyse terminée pour le sujet : {args.topic}")
-    print(f"\n=== Analyse du sujet : {args.topic} ===\n{response}\n")
+    rss = get_rss_news(topic=full_topic)
+    prompt_template = PROMPT_BY_TOPIC.get(topic, PROMPT_BY_TOPIC.get("default"))
 
-    # 🔧 Ajoute les sources en HTML si dispo
-    sources_html = extract_sources(response)
-    if sources_html.strip():
-        full_text = f"{response}\n\n📎 Sources à consulter :\n{sources_html}"
-    else:
-        full_text = response
+    prompt_text, response = analyze_with_model(
+        topic=full_topic,
+        rss=rss,
+        model=args.model,
+        prompt_template=prompt_template
+    )
 
-    save_training_example(prompt, response, topic=args.topic)
+    sources = extract_sources(response)
+    response_with_sources = response + ("\n\n📎 <b>Sources à consulter :</b>\n" + sources if sources else "")
+
+    logger.info(f"Analyse terminée pour : {full_topic}")
+    print(f"\n=== 🧠 Analyse du sujet : {full_topic} ===\n{response_with_sources}\n")
+
+    save_training_example(prompt_text, response_with_sources, topic=full_topic)
 
     if not args.no_send:
-        send_alert(topic=args.topic, texte=full_text)
+        send_alert(topic=full_topic, texte=response_with_sources)

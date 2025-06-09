@@ -24,23 +24,18 @@ echo "🛠 Création du binaire global Anews..."
 
 cat <<EOF | sudo tee /usr/local/bin/Anews > /dev/null
 #!/bin/bash
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VENV_DIR="$PROJECT_DIR/venv"
+PROJECT_DIR="\$HOME/Agent_news"  # <- adapte ce chemin si nécessaire
+VENV_DIR="\$PROJECT_DIR/venv"
 
-if [ ! -d "$VENV_DIR" ]; then
-  echo "❌ Environnement virtuel non trouvé dans $VENV_DIR. Lancez ./install.sh d'abord."
+if [ ! -d "\$VENV_DIR" ]; then
+  echo "❌ Environnement virtuel non trouvé dans \$VENV_DIR. Lancez ./install.sh d'abord."
   exit 1
 fi
 
-source "$VENV_DIR/bin/activate"
+source "\$VENV_DIR/bin/activate"
 
-if [ -z "$1" ]; then
-  echo "❌ Sujet manquant. Utilisation : Anews \"votre_sujet\""
-  exit 1
-fi
-
-cd "$PROJECT_DIR"
-python3 main.py --topic "$1"
+cd "\$PROJECT_DIR"
+python3 main.py "\$@"
 EOF
 
 sudo chmod +x /usr/local/bin/Anews

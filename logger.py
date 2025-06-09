@@ -1,22 +1,32 @@
 import logging
 import os
+from datetime import datetime
 
-def setup_logger(name):
+def setup_logger(name: str):
+    # Crée le dossier logs si besoin
+    os.makedirs("logs", exist_ok=True)
+
+    # Nom de fichier basé sur la date
+    log_filename = datetime.now().strftime("logs/%Y-%m-%d.log")
+
+    # Création du logger
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
+    # Évite les handlers dupliqués
     if not logger.handlers:
-        # Console
-        stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter('[%(asctime)s] %(levelname)s – %(name)s – %(message)s')
-        stream_handler.setFormatter(formatter)
-        logger.addHandler(stream_handler)
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_format = logging.Formatter("[%(levelname)s] %(message)s")
+        console_handler.setFormatter(console_format)
+        logger.addHandler(console_handler)
 
-        # Fichier
-        log_dir = os.path.join(os.getcwd(), "logs")
-        os.makedirs(log_dir, exist_ok=True)
-        file_handler = logging.FileHandler(os.path.join(log_dir, "agent_news.log"))
-        file_handler.setFormatter(formatter)
+        # Fichier handler
+        file_handler = logging.FileHandler(log_filename, encoding="utf-8")
+        file_handler.setLevel(logging.INFO)
+        file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(file_format)
         logger.addHandler(file_handler)
 
     return logger
