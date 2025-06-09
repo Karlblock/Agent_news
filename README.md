@@ -1,6 +1,6 @@
 # 🧠 Agent IA News – Analyse automatique de l’actualité par sujet
 
-Ce projet permet d’analyser n’importe quel sujet (ex: IA, PSG, politique) à l’aide d’un modèle d’IA et d’un flux d’actualités.
+Ce projet permet d’analyser n’importe quel sujet (ex: IA, Sport, politique) à l’aide d’un modèle d’IA et d’un flux d’actualités.
 
 ## 🚀 Fonctionnalités
 
