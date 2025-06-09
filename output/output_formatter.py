@@ -2,8 +2,10 @@ from logger import setup_logger
 logger = setup_logger(__name__)
 
 import os
-from discord_output import send_to_discord
-from telegram_output import send_to_telegram
+from output.discord_output import send_to_discord
+from output.telegram_output import send_to_telegram
+
+
 
 def send_alert(topic, texte):
     try:

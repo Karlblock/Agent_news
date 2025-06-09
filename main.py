@@ -3,10 +3,10 @@ logger = setup_logger(__name__)
 logger.info("🧠 Agent IA News lancé")
 
 import argparse
-from news_fetcher import get_rss_news
-from analyzer import analyze_with_model
-from output_formatter import send_alert
-from utils import save_training_example
+from agent.news_fetcher import get_rss_news
+from agent.analyzer import analyze_with_model
+from output.output_formatter import send_alert
+from agent.utils import save_training_example
 from datetime import datetime
 
 if __name__ == "__main__":

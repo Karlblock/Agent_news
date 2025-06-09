@@ -2,6 +2,7 @@ import feedparser
 import os
 from logger import setup_logger
 from urllib.parse import quote
+from datetime import datetime, timedelta
 
 logger = setup_logger(__name__)
 
@@ -10,8 +11,10 @@ DANGEROUS_KEYWORDS = ["attaque", "blessé", "affrontement", "violence", "émeute
 def is_safe(text):
     return not any(kw in text.lower() for kw in DANGEROUS_KEYWORDS)
 
-def get_rss_news(topic, max_entries=5, feed_file="feeds.txt"):
+def get_rss_news(topic, max_entries=5, feed_file="config/feeds.txt"):
     safe_topic = quote(topic)
+    now = datetime.utcnow()
+    limit_time = now - timedelta(hours=24)
 
     dynamic_feeds = [
         f"https://news.google.com/rss/search?q={safe_topic}",
@@ -30,6 +33,12 @@ def get_rss_news(topic, max_entries=5, feed_file="feeds.txt"):
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries[:max_entries]:
+                published = entry.get("published_parsed") or entry.get("updated_parsed")
+                if published:
+                    entry_time = datetime(*published[:6])
+                    if entry_time < limit_time:
+                        continue  # Trop vieux
+
                 title = entry.get("title", "Sans titre")
                 summary = entry.get("summary", "").split('.')[0]
                 if is_safe(summary):

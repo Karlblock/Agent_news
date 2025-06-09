@@ -13,14 +13,18 @@ DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
 def analyze_with_model(topic, rss, model="gpt-4o-mini"):
     prompt = (
         f"Tu es un analyste chargé d'analyser uniquement les actualités pertinentes liées au sujet suivant : \"{topic}\". "
+        "Réponds en 1000 caractères max, avec un résumé synthétique. "
+        "Ajoute une section : 📎 *Sources à consulter* avec les liens des articles utilisés si disponibles. "
         "Ignore les contenus hors-sujet, géopolitiques ou violents. "
         "Structure ta réponse avec ces titres :\n"
-        "Résumé du sujet :\n"
-        "Tendances actuelles :\n"
-        "Risques ou opportunités :\n"
-        "News marquantes :\n"
-        f"Voici les données :\n{rss}"
+        "📝 Résumé du sujet :\n"
+        "📊 Tendances actuelles :\n"
+        "⚠️ Risques ou opportunités :\n"
+        "📰 News marquantes :\n"
+        f"Voici les données brutes :\n{rss}"
     )
+
+
 
     if model == "deepseek-chat":
         client = OpenAI(api_key=DEEPSEEK_KEY, base_url="https://api.deepseek.com")
