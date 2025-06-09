@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -10,11 +11,20 @@ load_dotenv()
 API_1MIN_KEY = os.getenv("API_1MIN_KEY")
 DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
 
+
+
+def extract_sources(response):
+    urls = re.findall(r'(https?://[^\s]+)', response)
+    unique_urls = list(set(urls))
+    formatted = [f'• <a href="{url}">{url}</a>' for url in unique_urls]
+    return "\n".join(formatted)
+
+
+
 def analyze_with_model(topic, rss, model="gpt-4o-mini"):
     prompt = (
         f"Tu es un analyste chargé d'analyser uniquement les actualités pertinentes liées au sujet suivant : \"{topic}\". "
         "Réponds en 1000 caractères max, avec un résumé synthétique. "
-        "Ajoute une section : 📎 *Sources à consulter* avec les liens des articles utilisés si disponibles. "
         "Ignore les contenus hors-sujet, géopolitiques ou violents. "
         "Structure ta réponse avec ces titres :\n"
         "📝 Résumé du sujet :\n"
@@ -24,8 +34,6 @@ def analyze_with_model(topic, rss, model="gpt-4o-mini"):
         f"Voici les données brutes :\n{rss}"
     )
 
-
-
     if model == "deepseek-chat":
         client = OpenAI(api_key=DEEPSEEK_KEY, base_url="https://api.deepseek.com")
         res = client.chat.completions.create(
@@ -34,7 +42,9 @@ def analyze_with_model(topic, rss, model="gpt-4o-mini"):
                       {"role": "user", "content": prompt}],
             stream=False
         )
-        return prompt, res.choices[0].message.content
+        response_text = res.choices[0].message.content
+        sources_html = extract_sources(response_text)
+        return prompt, response_text
 
     headers = {"API-KEY": API_1MIN_KEY, "Content-Type": "application/json"}
     data = {
@@ -48,7 +58,9 @@ def analyze_with_model(topic, rss, model="gpt-4o-mini"):
         result = res.json()
         result_object = result.get("aiRecord", {}).get("aiRecordDetail", {}).get("resultObject", [])
         if result_object:
-            return prompt, result_object[0]
+            response_text = result_object[0]
+            sources_html = extract_sources(response_text)
+            return prompt, response_text
         else:
             logger.warning(f"[IA] Aucune réponse générée pour le sujet : {topic}")
             return prompt, "Aucune réponse"
@@ -61,3 +73,4 @@ def analyze_with_model(topic, rss, model="gpt-4o-mini"):
     else:
         logger.error(f"[IA] Erreur {res.status_code} – {res.text}")
         return prompt, f"[X] Erreur {res.status_code} : {res.text}"
+

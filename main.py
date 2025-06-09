@@ -1,12 +1,11 @@
 from logger import setup_logger
 logger = setup_logger(__name__)
-logger.info("🧠 Agent IA News lancé")
 
 import argparse
 from agent.news_fetcher import get_rss_news
-from agent.analyzer import analyze_with_model
+from agent.analyzer import analyze_with_model, extract_sources
 from output.output_formatter import send_alert
-from agent.utils import save_training_example
+from utils import save_training_example
 from datetime import datetime
 
 if __name__ == "__main__":
@@ -21,7 +20,15 @@ if __name__ == "__main__":
 
     logger.info(f"Analyse terminée pour le sujet : {args.topic}")
     print(f"\n=== Analyse du sujet : {args.topic} ===\n{response}\n")
+
+    # 🔧 Ajoute les sources en HTML si dispo
+    sources_html = extract_sources(response)
+    if sources_html.strip():
+        full_text = f"{response}\n\n📎 Sources à consulter :\n{sources_html}"
+    else:
+        full_text = response
+
     save_training_example(prompt, response, topic=args.topic)
 
     if not args.no_send:
-        send_alert(topic=args.topic, texte=response)
+        send_alert(topic=args.topic, texte=full_text)
