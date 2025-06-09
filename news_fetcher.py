@@ -1,6 +1,7 @@
 import feedparser
 import os
 from logger import setup_logger
+from urllib.parse import quote
 
 logger = setup_logger(__name__)
 
@@ -10,9 +11,11 @@ def is_safe(text):
     return not any(kw in text.lower() for kw in DANGEROUS_KEYWORDS)
 
 def get_rss_news(topic, max_entries=5, feed_file="feeds.txt"):
+    safe_topic = quote(topic)
+
     dynamic_feeds = [
-        f"https://news.google.com/rss/search?q={topic}",
-        f"https://www.bing.com/news/search?q={topic}&format=rss"
+        f"https://news.google.com/rss/search?q={safe_topic}",
+        f"https://www.bing.com/news/search?q={safe_topic}&format=rss"
     ]
 
     custom_feeds = []
