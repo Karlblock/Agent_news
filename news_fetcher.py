@@ -4,6 +4,11 @@ from logger import setup_logger
 
 logger = setup_logger(__name__)
 
+DANGEROUS_KEYWORDS = ["attaque", "blessé", "affrontement", "violence", "émeute", "bagarre", "incidents", "heurts"]
+
+def is_safe(text):
+    return not any(kw in text.lower() for kw in DANGEROUS_KEYWORDS)
+
 def get_rss_news(topic, max_entries=5, feed_file="feeds.txt"):
     dynamic_feeds = [
         f"https://news.google.com/rss/search?q={topic}",
@@ -24,7 +29,10 @@ def get_rss_news(topic, max_entries=5, feed_file="feeds.txt"):
             for entry in feed.entries[:max_entries]:
                 title = entry.get("title", "Sans titre")
                 summary = entry.get("summary", "").split('.')[0]
-                news.append(f"{title} - {summary}")
+                if is_safe(summary):
+                    news.append(f"{title} - {summary}")
+                else:
+                    logger.warning(f"[RSS] Filtré : {title}")
         except Exception as e:
             logger.error(f"[RSS] Erreur de parsing sur {url} : {e}")
 

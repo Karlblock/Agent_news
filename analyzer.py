@@ -12,13 +12,14 @@ DEEPSEEK_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 def analyze_with_model(topic, rss, model="gpt-4o-mini"):
     prompt = (
-        f"Tu es un expert du domaine '{topic}'. Donne une synthèse neutre et structurée :\n"
+        f"Tu es un analyste chargé d'analyser uniquement les actualités pertinentes liées au sujet suivant : \"{topic}\". "
+        "Ignore les contenus hors-sujet, géopolitiques ou violents. "
+        "Structure ta réponse avec ces titres :\n"
         "Résumé du sujet :\n"
         "Tendances actuelles :\n"
-        "Risques ou opportunités à noter :\n"
-        "Actualités marquantes :\n"
-        f"Voici les infos disponibles :\n{rss}\n"
-        "Analyse uniquement à partir de ces éléments. Ne fais pas de recommandations."
+        "Risques ou opportunités :\n"
+        "News marquantes :\n"
+        f"Voici les données :\n{rss}"
     )
 
     if model == "deepseek-chat":
@@ -47,6 +48,12 @@ def analyze_with_model(topic, rss, model="gpt-4o-mini"):
         else:
             logger.warning(f"[IA] Aucune réponse générée pour le sujet : {topic}")
             return prompt, "Aucune réponse"
+    elif res.status_code == 423:
+        logger.warning(f"[IA] 423 – Contenu filtré, relance avec DeepSeek...")
+        return analyze_with_model(topic, rss, model="deepseek-chat")
+    elif res.status_code == 401:
+        logger.error("❌ Clé API invalide. Vérifie API_1MIN_KEY dans .env.")
+        return prompt, "[X] Clé API invalide. Vérifie .env"
     else:
         logger.error(f"[IA] Erreur {res.status_code} – {res.text}")
         return prompt, f"[X] Erreur {res.status_code} : {res.text}"
