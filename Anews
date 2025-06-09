@@ -1,0 +1,25 @@
+#!/bin/bash
+# Script global : Anews
+
+# 👉 Renseigne ici le chemin réel de ton projet Agent_News
+PROJECT_DIR="/home/user1/Agent_news"
+VENV_DIR="$PROJECT_DIR/venv"
+
+# Vérifie que le venv existe
+if [ ! -d "$VENV_DIR" ]; then
+  echo "❌ Environnement virtuel non trouvé dans $VENV_DIR. Lancez ./install.sh depuis le dossier du projet."
+  exit 1
+fi
+
+# Active l'environnement virtuel
+source "$VENV_DIR/bin/activate"
+
+# Vérifie qu’un sujet est passé
+if [ -z "$1" ]; then
+  echo "❌ Sujet manquant. Utilisation : Anews \"votre_sujet\""
+  exit 1
+fi
+
+# Lancement
+cd "$PROJECT_DIR" || exit 1
+python3 main.py --topic "$1"

@@ -46,7 +46,9 @@ TELEGRAM_CHAT_ID=your_chat_id
 
 - [ ] Support complet de Telegram
 - [ ] Interface Web minimaliste
+- [ ] Historique des analyses dans SQLite
+- [ ] Cron de génération automatique
 
 ---
 
-© 2025 – KarlBlock
+© 2025 – Cyber Normandie

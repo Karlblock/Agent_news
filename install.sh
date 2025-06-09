@@ -1,18 +1,11 @@
 #!/bin/bash
-
 echo "🔧 Installation de l'agent IA News..."
 
-# Création de l'environnement virtuel
 python3 -m venv venv
 source venv/bin/activate
-
-# Mise à jour pip
 pip install --upgrade pip
-
-# Installation des dépendances
 pip install -r requirements.txt
 
-# Création du fichier .env si absent
 if [ ! -f ".env" ]; then
   echo "🔐 Création du fichier .env..."
   cat <<EOF > .env
@@ -27,4 +20,29 @@ else
   echo "ℹ️ Le fichier .env existe déjà. Vérifie son contenu."
 fi
 
+echo "🛠 Création du binaire global Anews..."
+
+cat <<EOF | sudo tee /usr/local/bin/Anews > /dev/null
+#!/bin/bash
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$PROJECT_DIR/venv"
+
+if [ ! -d "$VENV_DIR" ]; then
+  echo "❌ Environnement virtuel non trouvé dans $VENV_DIR. Lancez ./install.sh d'abord."
+  exit 1
+fi
+
+source "$VENV_DIR/bin/activate"
+
+if [ -z "$1" ]; then
+  echo "❌ Sujet manquant. Utilisation : Anews \"votre_sujet\""
+  exit 1
+fi
+
+cd "$PROJECT_DIR"
+python3 main.py --topic "$1"
+EOF
+
+sudo chmod +x /usr/local/bin/Anews
+echo "✅ Binaire Anews installé dans /usr/local/bin"
 echo "✅ Installation terminée."

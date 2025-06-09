@@ -2,7 +2,9 @@ import os
 import requests
 from openai import OpenAI
 from dotenv import load_dotenv
+from logger import setup_logger
 
+logger = setup_logger(__name__)
 load_dotenv()
 
 API_1MIN_KEY = os.getenv("API_1MIN_KEY")
@@ -37,6 +39,14 @@ def analyze_with_model(topic, rss, model="gpt-4o-mini"):
     }
 
     res = requests.post("https://api.1min.ai/api/features", headers=headers, json=data)
-    result = res.json()
-    output = result.get("aiRecord", {}).get("aiRecordDetail", {}).get("resultObject", ["Aucune réponse"])[0]
-    return prompt, output
+    if res.status_code == 200:
+        result = res.json()
+        result_object = result.get("aiRecord", {}).get("aiRecordDetail", {}).get("resultObject", [])
+        if result_object:
+            return prompt, result_object[0]
+        else:
+            logger.warning(f"[IA] Aucune réponse générée pour le sujet : {topic}")
+            return prompt, "Aucune réponse"
+    else:
+        logger.error(f"[IA] Erreur {res.status_code} – {res.text}")
+        return prompt, f"[X] Erreur {res.status_code} : {res.text}"
