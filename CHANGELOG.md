@@ -1,3 +1,6 @@
+## v0.0.1 - 2025-06-09
+- 'Agent_News'
+
 # Changelog – Agent News IA
 
 ## [0.1.0] – 2025-06-09
