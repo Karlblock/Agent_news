@@ -1,3 +1,6 @@
+from prompt_toolkit import prompt
+from rich.console import Console
+from rich.table import Table
 import argparse
 from logger import setup_logger
 from agent.analyzer import analyze_with_model, extract_sources
@@ -5,12 +8,23 @@ from agent.news_fetcher import get_rss_news
 from output.output_formatter import send_alert
 from prompts.prompts_dict import PROMPT_BY_TOPIC
 from utils import save_training_example
-from prompt_toolkit import prompt
-from rich.console import Console
-from rich.table import Table
 
-logger = setup_logger(__name__)
 console = Console()
+logger = setup_logger(__name__)
+
+AVAILABLE_MODELS = ["deepseek-chat", "mistral-large-latest"]
+
+def choisir_modele():
+    console.print("\n[bold yellow]🧠 Choisis un modèle IA[/bold yellow]")
+    for i, model in enumerate(AVAILABLE_MODELS):
+        console.print(f"[bold green][{i}][/bold green] {model}")
+    choix = prompt("👉 Entrez le numéro du modèle [0 par défaut] : ").strip()
+    try:
+        index = int(choix) if choix else 0
+        return AVAILABLE_MODELS[index]
+    except Exception:
+        console.print("❌ [bold red]Entrée invalide. Fermeture.[/bold red]")
+        exit(1)
 
 def choisir_categorie():
     console.print("\n[bold cyan]🧠 Choisis une catégorie d'analyse[/bold cyan]")
@@ -38,14 +52,13 @@ def choisir_categorie():
         console.print("❌ [bold red]Entrée invalide. Fermeture.[/bold red]")
         exit(1)
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, default="gpt-4o-mini", help="Modèle IA à utiliser")
+    parser.add_argument("--model", type=str, help="Modèle IA à utiliser (ex: deepseek-chat)")
     parser.add_argument("--no-send", action="store_true", help="Ne pas envoyer sur Discord/Telegram")
     args = parser.parse_args()
 
+    model = args.model or choisir_modele()
     topic = choisir_categorie()
     sous_sujet = prompt("📝 (Optionnel) Sujet plus précis ? ").strip()
     full_topic = f"{topic} – {sous_sujet}" if sous_sujet else topic
@@ -56,8 +69,7 @@ if __name__ == "__main__":
     prompt_text, response = analyze_with_model(
         topic=full_topic,
         rss=rss,
-        model=args.model,
-        prompt_template=prompt_template
+        model=model,
     )
 
     sources = extract_sources(response)
